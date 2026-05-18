@@ -38,6 +38,9 @@ class Settings:
     qdrant_vector_size: int
     ingest_staging_dir: str
     ingest_allowed_source_root: str | None
+    openai_api_key: str
+    openai_embedding_model: str
+    openai_chat_model: str
 
     @staticmethod
     def from_env() -> "Settings":
@@ -48,6 +51,9 @@ class Settings:
         qdrant_vector_size = _require_int_env("QDRANT_VECTOR_SIZE")
         ingest_staging_dir = _optional_env("INGEST_STAGING_DIR") or str(Path.cwd() / "var" / "ingest_staging")
         ingest_allowed_source_root = _optional_env("INGEST_ALLOWED_SOURCE_ROOT")
+        openai_api_key = _require_env("OPENAI_API_KEY")
+        openai_embedding_model = _optional_env("OPENAI_EMBEDDING_MODEL") or "text-embedding-3-small"
+        openai_chat_model = _optional_env("OPENAI_CHAT_MODEL") or "gpt-5-nano"
         return Settings(
             service_api_key=service_api_key,
             database_url=database_url,
@@ -56,4 +62,7 @@ class Settings:
             qdrant_vector_size=qdrant_vector_size,
             ingest_staging_dir=ingest_staging_dir,
             ingest_allowed_source_root=ingest_allowed_source_root,
+            openai_api_key=openai_api_key,
+            openai_embedding_model=openai_embedding_model,
+            openai_chat_model=openai_chat_model,
         )

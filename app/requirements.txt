@@ -5,4 +5,5 @@ sqlalchemy
 pymysql
 cryptography
 qdrant-client
+openai
 alembic

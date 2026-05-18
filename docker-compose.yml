@@ -7,6 +7,8 @@ services:
       # FastAPIコンテナ内でもこの変数を使えるように渡す
       - DATABASE_URL=mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@db:3306/${MYSQL_DATABASE}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_EMBEDDING_MODEL=${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}
+      - OPENAI_CHAT_MODEL=${OPENAI_CHAT_MODEL:-gpt-5-nano}
       - QDRANT_HOST=${QDRANT_HOST}
       - QDRANT_PORT=${QDRANT_PORT}
       - QDRANT_VECTOR_SIZE=${QDRANT_VECTOR_SIZE}
