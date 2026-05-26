@@ -13,8 +13,14 @@ services:
       - QDRANT_PORT=${QDRANT_PORT}
       - QDRANT_VECTOR_SIZE=${QDRANT_VECTOR_SIZE}
       - SERVICE_API_KEY=${SERVICE_API_KEY}
+      - INGEST_CHUNK_SIZE=${INGEST_CHUNK_SIZE:-1000}
+      - INGEST_CHUNK_OVERLAP=${INGEST_CHUNK_OVERLAP:-100}
+      - INGEST_STAGING_DIR=/var/ingest_staging
+    volumes:
+      - ingest_staging:/var/ingest_staging
     depends_on:
       - db
+      - qdrant
 
   db:
     image: mysql:8.4
@@ -41,3 +47,4 @@ services:
 volumes:
   mysql_data:
   qdrant_storage:
+  ingest_staging:

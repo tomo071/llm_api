@@ -29,6 +29,18 @@ def _require_int_env(name: str) -> int:
         ) from exc
 
 
+def _optional_int_env(name: str, *, default: int) -> int:
+    raw = _optional_env(name)
+    if raw is None:
+        return default
+    try:
+        return int(raw)
+    except ValueError as exc:
+        raise RuntimeError(
+            f"環境変数 {name} は整数である必要があります: {raw!r}"
+        ) from exc
+
+
 @dataclass(frozen=True)
 class Settings:
     service_api_key: str
@@ -41,6 +53,8 @@ class Settings:
     openai_api_key: str
     openai_embedding_model: str
     openai_chat_model: str
+    ingest_chunk_size: int
+    ingest_chunk_overlap: int
 
     @staticmethod
     def from_env() -> "Settings":
@@ -54,6 +68,8 @@ class Settings:
         openai_api_key = _require_env("OPENAI_API_KEY")
         openai_embedding_model = _optional_env("OPENAI_EMBEDDING_MODEL") or "text-embedding-3-small"
         openai_chat_model = _optional_env("OPENAI_CHAT_MODEL") or "gpt-5-nano"
+        ingest_chunk_size = _optional_int_env("INGEST_CHUNK_SIZE", default=1000)
+        ingest_chunk_overlap = _optional_int_env("INGEST_CHUNK_OVERLAP", default=100)
         return Settings(
             service_api_key=service_api_key,
             database_url=database_url,
@@ -65,4 +81,6 @@ class Settings:
             openai_api_key=openai_api_key,
             openai_embedding_model=openai_embedding_model,
             openai_chat_model=openai_chat_model,
+            ingest_chunk_size=ingest_chunk_size,
+            ingest_chunk_overlap=ingest_chunk_overlap,
         )

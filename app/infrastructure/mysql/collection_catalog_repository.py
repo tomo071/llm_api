@@ -7,6 +7,8 @@ from sqlalchemy import Engine, text
 from interface.collection_catalog_repository import (
     ActiveCollectionRecord,
     CollectionCatalogRepository,
+    CreateCollectionCatalogResult,
+    CreatedCollectionRecord,
     GenerateCollectionLookup,
     GenerateCollectionRecord,
     IngestCollectionLookup,
@@ -79,5 +81,71 @@ class MysqlCollectionCatalogRepository(CollectionCatalogRepository):
                 id=cid,
                 customer_id=customer_id,
                 collection_name=name,
+            ),
+        )
+
+    def create_active_collection(
+        self,
+        *,
+        customer_id: str,
+        collection_name: str,
+        use_type: int,
+    ) -> CreateCollectionCatalogResult:
+        customer_stmt = text(
+            """
+            SELECT id
+            FROM customer
+            WHERE customer_id = :cid
+              AND delete_flag = FALSE
+              AND deleted_at IS NULL
+            LIMIT 1
+            """
+        )
+        duplicate_stmt = text(
+            """
+            SELECT 1
+            FROM collection c
+            INNER JOIN customer cu ON cu.id = c.customer_id
+            WHERE cu.customer_id = :cid
+              AND c.use_type = :ut
+              AND c.delete_flag = FALSE
+            LIMIT 1
+            """
+        )
+        insert_stmt = text(
+            """
+            INSERT INTO collection (customer_id, collection_name, use_type)
+            VALUES (:customer_pk, :name, :ut)
+            """
+        )
+
+        with self.engine.begin() as conn:
+            customer_row = conn.execute(customer_stmt, {"cid": customer_id}).fetchone()
+            if customer_row is None:
+                return CreateCollectionCatalogResult(status="customer_not_found", collection=None)
+
+            duplicate_row = conn.execute(
+                duplicate_stmt,
+                {"cid": customer_id, "ut": use_type},
+            ).fetchone()
+            if duplicate_row is not None:
+                return CreateCollectionCatalogResult(status="duplicate", collection=None)
+
+            result = conn.execute(
+                insert_stmt,
+                {
+                    "customer_pk": int(customer_row[0]),
+                    "name": collection_name,
+                    "ut": use_type,
+                },
+            )
+            collection_id = int(result.lastrowid)
+
+        return CreateCollectionCatalogResult(
+            status="created",
+            collection=CreatedCollectionRecord(
+                id=collection_id,
+                collection_name=collection_name,
+                use_type=use_type,
             ),
         )

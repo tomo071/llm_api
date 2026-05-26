@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 
 from domain.errors import DomainValidationError
 from usecase.create_collection import (
+    CatalogCollectionAlreadyExistsError,
     CollectionAlreadyExistsError,
     CreateCollectionResult,
     CreateCollectionUsecase,
@@ -28,6 +29,8 @@ def create_collection_success_response(result: CreateCollectionResult) -> JSONRe
                 "collection_name": result.collection_name,
                 "display_name": result.display_name,
                 "customer_id": result.customer_id,
+                "collection_id": result.collection_id,
+                "use_type": result.use_type,
             }
         },
     )
@@ -47,6 +50,12 @@ def create_collection_error_response(exc: BaseException) -> JSONResponse:
             code="collection_already_exists",
             message=f"コレクションは既に存在します: {exc.collection_name}",
         )
+    if isinstance(exc, CatalogCollectionAlreadyExistsError):
+        return _error_response(
+            status_code=409,
+            code="catalog_collection_already_exists",
+            message=str(exc),
+        )
     if isinstance(exc, ExternalServiceError):
         return _error_response(
             status_code=424,
@@ -62,9 +71,15 @@ def create_collection_handler(
     API_key: str,
     customer_id: str,
     name: str,
+    use_type: int,
 ) -> JSONResponse:
     try:
-        result = usecase.execute(api_key=API_key, customer_id=customer_id, name=name)
+        result = usecase.execute(
+            api_key=API_key,
+            customer_id=customer_id,
+            name=name,
+            use_type=use_type,
+        )
     except Exception as e:
         return create_collection_error_response(e)
 

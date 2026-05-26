@@ -35,7 +35,31 @@ class GenerateCollectionLookup:
     collection: GenerateCollectionRecord | None = None
 
 
+@dataclass(frozen=True)
+class CreatedCollectionRecord:
+    id: int
+    collection_name: str
+    use_type: int
+
+
+CreateCollectionCatalogStatus = Literal["created", "duplicate", "customer_not_found"]
+
+
+@dataclass(frozen=True)
+class CreateCollectionCatalogResult:
+    status: CreateCollectionCatalogStatus
+    collection: CreatedCollectionRecord | None = None
+
+
 class CollectionCatalogRepository(Protocol):
     def find_for_ingest(self, *, customer_id: str, use_type: int) -> IngestCollectionLookup: ...
 
     def find_by_id_for_generate(self, *, reference_set_id: int) -> GenerateCollectionLookup: ...
+
+    def create_active_collection(
+        self,
+        *,
+        customer_id: str,
+        collection_name: str,
+        use_type: int,
+    ) -> CreateCollectionCatalogResult: ...

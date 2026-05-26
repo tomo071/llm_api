@@ -12,6 +12,7 @@ from usecase.ingest_files import (
     IngestFilesResult,
     IngestFilesUsecase,
 )
+from usecase.process_ingest_job import ProcessIngestJobUsecase
 from worker.ingest_worker import run_ingest_job
 
 
@@ -75,6 +76,7 @@ def reference_set_success_response(result: IngestFilesResult) -> JSONResponse:
 def handle_reference_set(
     *,
     usecase: IngestFilesUsecase,
+    process_ingest_usecase: ProcessIngestJobUsecase,
     background_tasks: BackgroundTasks,
     API_key: str,
     customer_id: str,
@@ -94,6 +96,7 @@ def handle_reference_set(
 
     background_tasks.add_task(
         run_ingest_job,
+        process_usecase=process_ingest_usecase,
         job_id=result.job_id,
         customer_id=result.customer_id,
         collection_db_id=result.collection_db_id,

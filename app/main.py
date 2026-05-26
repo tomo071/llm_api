@@ -15,10 +15,12 @@ from infrastructure.openai.embedding_client import OpenAIEmbeddingClient
 from infrastructure.openai.llm_client import OpenAILlmClient
 from infrastructure.qdrant.collection_repository import QdrantCollectionRepository
 from infrastructure.qdrant.vector_search_repository import QdrantVectorSearchRepository
+from infrastructure.qdrant.vector_write_repository import QdrantVectorWriteRepository
 from infrastructure.settings import Settings
 from usecase.create_collection import CreateCollectionUsecase
 from usecase.generate import GenerateUsecase
 from usecase.ingest_files import IngestFilesUsecase
+from usecase.process_ingest_job import ProcessIngestJobUsecase
 
 
 def create_app() -> FastAPI:
@@ -34,6 +36,7 @@ def create_app() -> FastAPI:
     create_collection_usecase = CreateCollectionUsecase(
         repository=collection_repo,
         customer_repository=customer_repo,
+        collection_catalog_repository=collection_catalog_repo,
         service_api_key=settings.service_api_key,
     )
 
@@ -48,6 +51,7 @@ def create_app() -> FastAPI:
     )
 
     vector_search_repo = QdrantVectorSearchRepository(client=qdrant_client)
+    vector_write_repo = QdrantVectorWriteRepository(client=qdrant_client)
     embedding_client = OpenAIEmbeddingClient(
         api_key=settings.openai_api_key,
         model=settings.openai_embedding_model,
@@ -63,6 +67,13 @@ def create_app() -> FastAPI:
         llm_client=llm_client,
         service_api_key=settings.service_api_key,
     )
+    process_ingest_usecase = ProcessIngestJobUsecase(
+        collection_repository=collection_repo,
+        vector_write_repository=vector_write_repo,
+        embedding_client=embedding_client,
+        chunk_size=settings.ingest_chunk_size,
+        chunk_overlap=settings.ingest_chunk_overlap,
+    )
 
     app = FastAPI()
 
@@ -75,12 +86,14 @@ def create_app() -> FastAPI:
         API_key: str = Form(...),
         customer_id: str = Form(...),
         name: str = Form(...),
+        use_type: int = Form(...),
     ):
         return create_collection_handler(
             usecase=create_collection_usecase,
             API_key=API_key,
             customer_id=customer_id,
             name=name,
+            use_type=use_type,
         )
 
     @app.post("/reference_set")
@@ -93,6 +106,7 @@ def create_app() -> FastAPI:
     ):
         return handle_reference_set(
             usecase=ingest_usecase,
+            process_ingest_usecase=process_ingest_usecase,
             background_tasks=background_tasks,
             API_key=API_key,
             customer_id=customer_id,
