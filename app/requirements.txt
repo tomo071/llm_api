@@ -1,5 +1,8 @@
 fastapi
+python-multipart
 uvicorn
 sqlalchemy
 pymysql
+cryptography
 qdrant-client
+alembic
