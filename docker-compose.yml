@@ -8,6 +8,9 @@ services:
       - DATABASE_URL=mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@db:3306/${MYSQL_DATABASE}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - QDRANT_HOST=${QDRANT_HOST}
+      - QDRANT_PORT=${QDRANT_PORT}
+      - QDRANT_VECTOR_SIZE=${QDRANT_VECTOR_SIZE}
+      - SERVICE_API_KEY=${SERVICE_API_KEY}
     depends_on:
       - db
 
